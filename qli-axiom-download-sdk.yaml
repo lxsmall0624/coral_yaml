@@ -1,0 +1,585 @@
+defaults:
+  coral.actions/configuration:
+    application: ${{ inputs.application }}
+    external-id: ${{ inputs.externalId }}
+    labels: ${{ inputs.labels }}
+    overrides:
+      applicationSettings:
+        - name: JenkinsJobPipelineDynamicGroovyVersion
+          value: v2
+        - name: JenkinsJobPipelineName
+          value: job-pipeline-v2
+  runs-on:
+    coral.actions/resource:
+      compute:
+        provider: ${{ inputs.compute.provider }}
+        architecture: ${{ inputs.compute.architecture }}
+        os: ${{ inputs.download.compute.os }}
+        containment: ${{ inputs.compute.containment }}
+        site: ${{ inputs.download.site }}
+        purpose: qli
+on:
+  workflow_call:
+    inputs:        
+      labels:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            hidden: true
+          ref: 'Method.get_labels'
+      externalId:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            hidden: true
+          ref: 'WorkflowSpec.workflowId'
+      workflowConfigId:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            hidden: true
+          ref: 'WorkflowConfigSpec.id'
+      application:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            hidden: true
+          ref: 'Settings.WAAS_APPLICATION_SOURCE'
+      timeoutInMinutes:
+        type: number
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Number'
+            defaultValue: 300
+            description: 'Workflow Task timeout in minutes'
+            label: 'Workflow task timeout in minutes'
+            rules: 
+              - type: 'max'
+                value: 480
+                message: 'Max allowed timeout is 480mins.'
+              - type: 'min'
+                value: 10
+                message: 'Min allowed timeout is 10mins.'
+      softwareImage:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            description: 'Software Image name as defined in PCM'
+            label: 'Software Image'
+            type: 'Text'
+      test.product:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            label: 'Product'
+      test.variant:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            label: 'Variant'
+      test.isGated:
+        type: boolean
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Boolean'
+            defaultValue: true
+            label: 'Is Test Gated'
+            description: 'Is axiom Test Gated'
+      test.enabled:
+        type: boolean
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Boolean'
+            defaultValue: true
+            label: 'Enable Test'
+            description: 'Enables Test launch as part of the workflow'
+      test.metaBuild.windows:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            description: true
+            type: 'Text'
+            label: 'Test Meta build path (windows)'
+      test.imageBuild.windows:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            description: true
+            type: 'Text'
+            label: 'Test Image build path (windows)'
+      test.timeoutInMinutes:
+        type: number
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Number'
+            defaultValue: 300
+            description: 'Overall Axiom test timeout'
+            label: 'Axiom test timeout in seconds'
+      test.purpose:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            label: 'Test Purpose'
+            description: 'Axiom test purpose'
+            defaultValue: 'release'
+      test.branch:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            label: 'Axiom Test build branch'
+            defaultValue: ''
+      test.artifactType: 
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            label: 'Test Aritfact type'
+            description: 'Select the type of artifact being validated.
+                          Example: If the workflow generates Image binaries then select Image'
+            type: 'Select'
+            options: 
+              - 'Meta'
+              - 'Image'
+            defaultValue: 'Meta'
+      test.metaBuildName:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            label: 'Meta Build Name'
+            description: 'Meta Build Name'
+            defaultValue: ''
+      test.maxFailuresAllowed:
+        type: number
+        default: 1
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Number'
+            label: 'Max Failures Allowed'
+            description: 'Maximum number of failures allowed'
+            defaultValue: 1
+      test.lookupSoftwareProduct:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            label: 'Lookup Software Product'
+            description: 'Lookup Software Product'
+            defaultValue: ''
+      test.target:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            label: 'Target'
+            description: 'Target'
+            defaultValue: ''
+      test.targetHardware:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            label: 'Target Hardware'
+            description: 'Target Hardware'
+            defaultValue: ''
+      test.buildType:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            label: 'Build Type'
+            description: 'Build Type'
+            defaultValue: ''
+      test.imageForMetaUpdate:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            label: 'Image For Meta Update'
+            description: 'Image For Meta Update'
+            defaultValue: ''
+      test.component:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            label: 'Component'
+            description: 'Component'
+            defaultValue: ''
+      test.dynamicCustomParams:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            label: 'Dynamic Custom Parameters'
+            description: 'Dynamic Custom Parameters'
+            defaultValue: ''
+      workflow_id:
+        type: number
+        required: false
+        coral.actions/metadata:
+          ui-annotations:
+            type: Number
+            label: GitHub Workflow ID
+            defaultValue: 300
+            description: ID of the GitHub Workflow used to upload artifacts to S3
+            rules:
+              - type: required
+                message: GitHub Workflow ID is required
+      download.site:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Select'
+            label: 'Download Site'
+            options:
+              - 'Hyderabad'
+            defaultValue: 'Hyderabad'
+      download_specification.Source:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            label: 'Source S3 Bucket Root Path'
+            description: 'S3 Bucket Root Path name where artifact is stored'
+            type: 'Text'
+            defaultValue: ""
+            rules:
+              - type: required
+                message: Source S3 bucket root path is required
+      file_path:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            label: 'File Path'
+            description: 'Path that contains the artifact file relative to S3 bucket'
+            type: 'Text'
+            defaultValue: ""
+            rules:
+              - type: required
+                message: File Path is required
+      download_specification.Destination:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            label: 'Destination to store S3 artifact'
+            type: 'Text'
+            hidden: true
+            defaultValue: ""
+      download_specification.Unzip:
+        type: boolean
+        coral.actions/metadata:
+          ui-annotations:
+            label: 'Unzip the artifacts'
+            type: "Boolean"
+            defaultValue: true
+            rules:
+              - type: required
+                message: Unzip the artifact
+      download_specification.account:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            label: 'Account information to assume Role'
+            type: 'Text'
+            defaultValue: "418295714268"
+      download_specification.CredentialJsonFilePath:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            label: 'Credentials JSON file path'
+            type: 'Text'
+            defaultValue: ""
+            hidden: true
+      download_specification.PasswordJsonPath:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            label: 'password json path'
+            type: 'Text'
+            defaultValue: "password"
+            hidden: true
+      download_specification.UserNameJsonPath:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            label: 'user name json path'
+            type: 'Text'
+            defaultValue: "username"
+            hidden: true
+      download_specification.RoleName:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            label: 'RoleName to be used for accessing S3 Location'
+            type: 'Text'
+            defaultValue: "SmlAppRO"
+      download_specification.TempDirectory:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            label: 'Temporary directory'
+            defaultValue: ""
+            type: 'Text'
+            hidden: true
+      download_specification.StormchaserApiBaseUrl:
+        type: string
+        coral.actions/metadata:
+          ref: 'Settings.BAAS_OAUTH_BASE_URL'
+          ui-annotations:
+            label: 'Stormchaser API Base endpoint'
+            type: 'Text'
+            hidden: true
+      download_specification.Verbose:
+        type: boolean
+        coral.actions/metadata:
+          ui-annotations:
+            label: 'Verbose'
+            type: "Boolean"
+            defaultValue: true
+            hidden: true
+      download.timeoutInMinutes:
+        type: number
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Number'
+            defaultValue: 300
+            description: 'Overall Download Job timeout'
+            label: 'Download Job timeout in minutes'
+      ci_system:
+        type: string
+        coral.actions/metadata:
+          ref: 'Settings.AXIOM_CI_SYSTEM'
+          ui-annotations:
+            hidden: true
+      workflow_name:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            hidden: true
+          ref: 'WorkflowSpec.workflowName'
+      download.enabled:
+        type: boolean
+        default: true
+        coral.actions/metadata:
+          ui-annotations:
+            label: 'Enable Steps for Download'
+            type: 'Boolean'
+            defaultValue: true
+            hidden: true
+      download.compute.os:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            required: false
+            defaultValue: 'Ubuntu22.04.3'
+            label: 'Operating System'
+            hidden: true
+      download.location.windows:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            hidden: true
+          ref: Method.get_windows_download_path
+      download.location.linux:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            hidden: true
+          ref: Method.get_linux_download_path
+      changeSpec:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            hidden: true
+          ref: 'Method.get_change_spec'
+      system.account:
+        type: string
+        default: cibuildprdsvc
+        coral.actions/metadata:
+          ui-annotations:
+            hidden: true
+            defaultValue: cibuildprdsvc
+      locationSpec:
+        type: string
+        coral.actions/metadata:
+          ui-annotations:
+            hidden: true
+          ref: 'Method.get_download_spec'
+      coralUtilitiesTag:
+        type: string
+        coral.actions/metadata:
+          ref: 'Settings.CORAL_UTILITIES_CONTAINER_TAG'
+          ui-annotations:
+            hidden: true
+      compute.containment:
+        type: string
+        required: false
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            defaultValue: 'Qualnet'
+            hidden: true
+      compute.provider:
+        type: string
+        required: false
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            defaultValue: 'Qualcomm'
+            hidden: true
+      compute.architecture:
+        type: string
+        required: false
+        coral.actions/metadata:
+          ui-annotations:
+            type: 'Text'
+            defaultValue: 'AMD64'
+            hidden: true
+          
+jobs:
+  download-setup:
+    coral.actions/labels: ${{ inputs.labels }} 
+    timeout-minutes: ${{ inputs.timeoutInMinutes }}
+    coral.actions/file-realizations:
+      - destination-file-path: '%task_files_dir%/.coral/changeSpec.json'
+        base64-content: ${{ inputs.changeSpec }}
+      - destination-file-path: '%task_files_dir%/.coral/locationSpec.json'
+        base64-content: ${{ inputs.locationSpec }}
+    runs-on: null
+    container:
+      coral.actions/container:
+        images:
+          - image: 019415958841.dkr.ecr.us-west-2.amazonaws.com/stormchaser/ci.coral.utilities:${{ inputs.coralUtilitiesTag }}
+            name: coral-utilities
+            entry-point:
+              - /bin/bash
+              - -c
+            init: false
+            essential: true
+            primary: true
+            health-check:
+              test: sleep 1
+              interval: 5s
+              timeout: 60s
+              retries: 3
+              start-period: 1s
+            env:
+              PATH: /bin/coral_utilities/dist:/usr/local/bin:/usr/bin:/bin
+    steps:
+      - run: printenv && coral_workflow_id=$(printenv "coral_workflow_id") && github-run-cli workflow-run-info --workflow-id ${{ inputs.workflow_id }} --change-spec %task_files_dir%/.coral/changeSpec.json --result-path %task_files_dir%/.coral && cd %workspace_dir% && mkdir -p $coral_workflow_id && pushd $coral_workflow_id && cp -r %task_files_dir%/.coral . && cp /bin/coral_utilities/config/secrets.json .coral/ && chmod -R 777 %workspace_dir%/$coral_workflow_id &&  cd %workspace_dir%/$coral_workflow_id && workflow_run_number=$(jq -r ".workflow_run_id" .coral/${{ inputs.workflow_id }}.json) && run_attempt=$(jq -r ".run_attempt" .coral/${{ inputs.workflow_id }}.json) && repo_name=$(jq -r ".changes[0].attributes.lowLevelSpec.repository" .coral/changeSpec.json) && linuxPath=$(jq -r ".downloadSpecification[0].destinations.linux" .coral/locationSpec.json) && source=${{ inputs.download_specification.Source }}/$repo_name/$workflow_run_number-$run_attempt/${{ inputs.file_path }} && downloadSpecifications=${{ toJSON(toJSON(inputs.download_specification)) }} && echo -e $downloadSpecifications | jq . > .coral/downloadSpecifications.json && secrets_path=%workspace_dir%/$coral_workflow_id/.coral/secrets.json && destination_path=$linuxPath && > .coral/temp_downloadSpecifications.json  && jq --arg source "$source" --arg secrets_path "$secrets_path" --arg destination_path "$destination_path" ".Source = \"$source\" | .Destination = \"$destination_path\" | .CredentialJsonFilePath = \"$secrets_path\"" .coral/downloadSpecifications.json > .coral/temp_downloadSpecifications.json && mv .coral/temp_downloadSpecifications.json .coral/downloadSpecifications.json && cat .coral/downloadSpecifications.json && mkdir -p %workspace_dir%/${{ inputs.workflowConfigId }} && chmod -R 777 %workspace_dir%/${{ inputs.workflowConfigId }} && echo $coral_workflow_id> %workspace_dir%/${{ inputs.workflowConfigId }}/coral_workflow_id.txt;
+        coral.actions/expected-exit-codes: [ 0 ]
+    coral.actions/secrets:
+      labels:
+        - name: CoralUtilitiesConfig
+          value: ${{ inputs.system.account }}
+  download:
+    timeout-minutes: ${{ inputs.download.timeoutInMinutes }}
+    needs:
+      - download-setup
+    continue-on-error: false
+    coral.actions/run-conditions:
+      - name: download-setup
+        outcomes:
+          - Succeeded
+    steps:
+      - run: printenv && coral_workflow_id=$(cat %workspace_dir%/${{ inputs.workflowConfigId }}/coral_workflow_id.txt) && baas storage download --file %workspace_dir%/$coral_workflow_id/.coral/downloadSpecifications.json && artifact_name=$(ls -A ${{ inputs.download.location.linux }}) && cp -R ${{ inputs.download.location.linux }}/$artifact_name/* ${{ inputs.download.location.linux }} && rm -rf ${{ inputs.download.location.linux }}/$artifact_name;
+        coral.actions/expected-exit-codes: [ 0 ]
+  update-build-id:
+    coral.actions/labels: ${{ inputs.labels }} 
+    timeout-minutes: ${{ inputs.timeoutInMinutes }}
+    needs: download
+    coral.actions/run-conditions:
+      - name: download
+        outcomes:
+          - Succeeded
+    runs-on: null
+    container:
+      coral.actions/container:
+        images:
+          - image: 019415958841.dkr.ecr.us-west-2.amazonaws.com/stormchaser/ci.coral.utilities:${{ inputs.coralUtilitiesTag }}
+            name: coral-utilities
+            entry-point:
+              - /bin/bash
+              - -c
+            init: false
+            essential: true
+            primary: true
+            health-check:
+              test: sleep 1
+              interval: 5s
+              timeout: 60s
+              retries: 3
+              start-period: 1s
+            env:
+              PATH: /bin/coral_utilities/dist:/usr/local/bin:/usr/bin:/bin
+    steps:
+      - run: printenv && coral_workflow_id=$(cat %workspace_dir%/${{ inputs.workflowConfigId }}/coral_workflow_id.txt) && ls -al %workspace_dir%/$coral_workflow_id/.coral/  && cat %workspace_dir%/$coral_workflow_id/.coral/contents.xml && update-contents-cli patch-contents --xml-file %workspace_dir%/$coral_workflow_id/.coral/contents.xml --source %workspace_dir%/$coral_workflow_id/.coral/downloadSpecifications.json && cat %workspace_dir%/$coral_workflow_id/.coral/contents.xml;
+        coral.actions/expected-exit-codes: [ 0 ]
+    coral.actions/secrets:
+      labels:
+        - name: CoralUtilitiesConfig
+          value: ${{ inputs.system.account }}
+  launch-axiom-test:
+    coral.actions/enabled: ${{ inputs.test.enabled }}
+    needs: update-build-id
+    coral.actions/run-conditions:
+      - name: replace-contents-xml
+        outcomes:
+          - Succeeded
+    uses: qcom-eng-qswat/coral-workflow-templates/common/axiom-test.yaml@main
+    with:
+      application: ${{ inputs.application }}
+      labels: ${{ inputs.labels }}
+      workflow-name: ${{ inputs.workflow_name }}
+      axiom-app-source: ${{ inputs.ci_system }}
+      timeoutInMinutes: ${{ inputs.test.timeoutInMinutes }}
+      coralUtilitiesTag: ${{ inputs.coralUtilitiesTag }}
+      system.account: ${{ inputs.system.account }}
+      locationSpec: ${{ inputs.locationSpec }}
+      destinationFilePath: ${{ '%task_files_dir%/.coral/locationSpec.json' }}
+      artifactType: ${{ inputs.test.artifactType }}
+      test.product: ${{ inputs.test.product }}
+      test.variant: ${{ inputs.test.variant }}
+      test.isGated: ${{ inputs.test.isGated }}
+      test.meta_build.windows: ${{ inputs.test.artifactType == 'Meta' && inputs.download.location.windows || inputs.test.metaBuild.windows }}
+      test.timeoutInMinutes: ${{ inputs.test.timeoutInMinutes }}
+      test.imageSpec.imageName: ${{ inputs.softwareImage }}
+      test.imageSpec.imageBuild.windows: ${{ inputs.test.artifactType == 'Image' &&  inputs.download.location.windows || inputs.test.imageBuild.windows }}
+      test.purpose: ${{ inputs.test.purpose }}
+      test.branch: ${{ inputs.test.branch }}
+      test.isEnabled: ${{ inputs.test.enabled }}
+      test.metaBuildName: ${{ inputs.test.metaBuildName }}
+      test.maxFailuresAllowed: ${{ inputs.test.maxFailuresAllowed }}
+      test.lookupSoftwareProduct: ${{ inputs.test.lookupSoftwareProduct }}
+      test.target: ${{ inputs.test.target }}
+      test.targetHardware: ${{ inputs.test.targetHardware }}
+      test.buildType: ${{ inputs.test.buildType }}
+      test.imageForMetaUpdate: ${{ inputs.test.imageForMetaUpdate }}
+      test.component: ${{ inputs.test.component }}
+      test.dynamicCustomParams: ${{ inputs.test.dynamicCustomParams }}
+    coral.actions/metadata:
+      display-inline: true
+  download-cleanup:
+    needs:
+      - launch-axiom-test
+    continue-on-error: true
+    coral.actions/labels: ${{ inputs.labels }}
+    coral.actions/enabled: ${{ inputs.download.enabled }}
+    coral.actions/run-conditions:
+      - name: download
+        outcomes: [ '*' ]
+    steps:
+      - run: |
+          printenv
+          coral_workflow_id=$(cat %workspace_dir%/${{ inputs.workflowConfigId }}/coral_workflow_id.txt) 
+          rm -rf %workspace_dir%/$coral_workflow_id %workspace_dir%/${{ inputs.workflowConfigId }}
+        coral.actions/expected-exit-codes: [ 0, 1 ]
